@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <map>
+#include <stdio.h>
 using namespace std;
 
 #include "utils.h"
@@ -22,8 +23,12 @@ using namespace std;
 #define COUNTER     unsigned long long
 
 //#define SAVE_CSV
-#define SAVE_BINARY
+//#define SAVE_BINARY
 
+#ifdef TABLE_SIZE
+#include <stdio.h>
+FILE * logFile;
+#endif // TABLE_SIZE
 
 void CheckHeartBeat(UINT64 numIter, UINT64 numMispred) {
     UINT64 d1K = 1000;
@@ -155,6 +160,7 @@ int main(int argc, char *argv[]) {
     std::cout << "    PC:           " << sizeof(dp.PC) << '(' << &dp.PC << ')' << std::endl;
 #endif
 
+    logFile = fopen ((trace_path + ".log").c_str(),"w");
     PREDICTOR *brpred = new PREDICTOR();  // this instantiates the predictor code
 
     bt9::BT9Reader bt9_reader(trace_path);
@@ -297,7 +303,9 @@ int main(int argc, char *argv[]) {
             } else if (br_class.conditionality ==
                        bt9::BrClass::Conditionality::UNCONDITIONAL) { // for predictors that want to track unconditional branches
                 uncond_branch_instruction_counter++;
+#ifndef HASH_FUNC
                 brpred->TrackOtherInst(PC, opType, branchTaken, branchTarget);
+#endif
 #ifdef SAVE_CSV
                 //conditional,branchTaken,_,opType,branchTarget
                 csvFile << "0," + std::to_string(branchTaken) + ",," +
@@ -344,14 +352,28 @@ int main(int argc, char *argv[]) {
 
     //NOTE: competitors are judged solely on MISPRED_PER_1K_INST. The additional stats are just for tuning your predictors.
 
-    printf("  TRACE \t : %s", trace_path.c_str());
-    printf("  NUM_INSTRUCTIONS            \t : %10llu", total_instruction_counter);
-    printf("  NUM_BR                      \t : %10llu",
+
+#ifdef TABLE_WIDTH
+    fprintf (logFile, NAME);
+    fprintf (logFile, " (TABLE_SIZE %d) ", TABLE_SIZE);
+    fprintf (logFile, " (TABLE_WIDTH %d) ", TABLE_WIDTH);
+    fprintf (logFile, "\n");
+#endif // TABLE_WIDTH
+#ifdef TABLE_COUNT
+    fprintf (logFile, NAME);
+    fprintf (logFile, " (TABLE_SIZE %d) ", TABLE_SIZE);
+    fprintf (logFile, " (TABLE_COUNT %d) ", TABLE_COUNT);
+    fprintf (logFile, "\n");
+#endif // TABLE_COUNT
+    fprintf (logFile, "  TRACE \t : %s", trace_path.c_str());
+    fprintf (logFile, "  NUM_INSTRUCTIONS            \t : %10llu", total_instruction_counter);
+    fprintf (logFile, "  NUM_BR                      \t : %10llu",
            branch_instruction_counter - 1); //JD2_2_2016 NOTE there is a dummy branch at the beginning of the trace...
-    printf("  NUM_UNCOND_BR               \t : %10llu", uncond_branch_instruction_counter);
-    printf("  NUM_CONDITIONAL_BR          \t : %10llu", cond_branch_instruction_counter);
-    printf("  NUM_MISPREDICTIONS          \t : %10llu", numMispred);
-    printf("  MISPRED_PER_1K_INST         \t : %10.4f",
+    fprintf (logFile, "  NUM_UNCOND_BR               \t : %10llu", uncond_branch_instruction_counter);
+    fprintf (logFile, "  NUM_CONDITIONAL_BR          \t : %10llu", cond_branch_instruction_counter);
+    fprintf (logFile, "  NUM_MISPREDICTIONS          \t : %10llu", numMispred);
+    fprintf (logFile, "  MISPRED_PER_1K_INST         \t : %10.4f",
            1000.0 * (double) (numMispred) / (double) (total_instruction_counter));
-    printf("\n");
+    fprintf (logFile, "\n");
+    fclose(logFile);
 }
