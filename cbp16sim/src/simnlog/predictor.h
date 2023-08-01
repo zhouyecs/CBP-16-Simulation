@@ -16,9 +16,14 @@
 #include <vector>
 #include <cstring>
 #include <cstdlib>
+
+#ifndef SIM_CYCLE
 #include "utils.h"
 #include "bt9.h"
 #include "bt9_reader.h"
+#else
+#include "../common/utils.h"
+#endif // SIM_CYCLE
 
 #define TABLE_WIDTH 11
 #define TABLE_SIZE 32
@@ -57,7 +62,7 @@ public:
 			weight_table.push_back(row);
 		}
 	}
-	
+
 	bool GetPrediction (UINT64 address)
 	{
 		uint64_t index=getIndex(history,address);
