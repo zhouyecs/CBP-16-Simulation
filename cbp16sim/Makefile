@@ -42,6 +42,7 @@ CPPFLAGS    := -O3 -Wall -std=c++11 -Wextra -Winline -Winit-self -Wno-sequence-p
                -I/usr/include/boost/iostreams/device/
 CPPFLAGS_PY := $(CPPFLAGS) -I/usr/include/$(PYTHON)/
 CPPFLAGS_LG := $(CPPFLAGS) -I$(SRCDIR_LG)
+PYTHON_LDFLAGS := $(shell python3-config --ldflags)
 
 PROGRAMS    := simpython simnlog
 
@@ -50,7 +51,7 @@ PROGRAMS    := simpython simnlog
 all: $(PROGRAMS)
 
 simpython: $(OBJ_PY)
-	$(CXX) $(LDFLAGS_PY) $^ $(LDLIBS) -o $@
+	$(CXX) $^ $(LDFLAGS_PY) $(LDLIBS) $(PYTHON_LDFLAGS) -o $@
 
 simnlog: $(OBJ_LG)
 	$(CXX) $(LDFLAGS_LG) $^ $(LDLIBS) -o $@
